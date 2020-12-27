@@ -1,0 +1,8 @@
+.idea
+.vscode
+.env
+.mix.env
+dist
+/vendor
+node_modules
+
