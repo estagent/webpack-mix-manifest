@@ -45,3 +45,8 @@ parses dotted hashed assets like.
 #sample mix function is in mix.php 
 
 
+
+Alternatively, you might check mix-version-replace module.
+[a link](https://github.com/estagent/mix-version-replace/README.md) 
+
+

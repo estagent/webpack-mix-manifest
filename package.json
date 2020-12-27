@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "webpack plugin to generate mix-manifest file like laravel-mix",
   "main": "MixManifest.js",
-  "homepage": "https://github.com/estagent/mixmanifest",
+  "homepage": "https://github.com/estagent/webpack-mix-manifest",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
