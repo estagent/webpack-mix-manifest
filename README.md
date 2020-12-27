@@ -14,7 +14,7 @@ $ npm install  --save-dev webpack-mix-manifest
 
 #webpack.config.js
 
-const MixVersionReplace = require('webpack-mix-manifest');
+const MixManifest = require('webpack-mix-manifest');
 
 ...
 
