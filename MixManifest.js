@@ -6,9 +6,9 @@ const defaultOptions = {
     hashPattern: '[a-f0-9]{hashDigestLength}', // {hash}
     namePattern: '[\\.-]', //  name-{hash}
     queryPattern: '\\?[w_]=', // ?_={hash}
-    resources: true, // if false only js/css updated in manifest
-    extensions: null, // override resources option
-    // extensions: ['js', 'css'],
+    resources: false, // if false only js/css updated in manifest
+    // extensions: null, // override resources option
+    extensions: ['js', 'css'],
 }
 module.exports = class MixManifest {
     constructor(options = {}) {
@@ -26,31 +26,31 @@ module.exports = class MixManifest {
 
     apply(compiler) {
         const opts = this.options
-        let asseet_path
+        let asset_path
 
         compiler.hooks.done.tap('MixManifest', stats => {
             const assets = stats.compilation.assetsInfo;
             const output = stats.compilation.outputOptions
             const hashDigestLength = output.hashDigestLength.toString();
 
-            asseet_path = output.publicPath ?? '/'
+            asset_path = output.publicPath ?? '/'
             if (output.publicPath === 'auto') {
                 // if (!process.env.ASSET_PATH) throw 'ASSET_PATH env is not defined! Please set ASSET_PATH in  EnvironmentPlugin '
-                asseet_path = process.env.ASSET_PATH ?? '/'
+                asset_path = process.env.ASSET_PATH ?? '/'
             }
-            if (asseet_path === '') asseet_path = '/'
+            if (asset_path === '') asset_path = '/'
 
             this.mixPath = opts.mixManifest !== 'auto'
                 ? path.resolve(opts.mixManifest)
                 : output.path
-                    .replace(asseet_path.replace(/\/$/, ''), '')
+                    .replace(asset_path.replace(/\/$/, ''), '')
                     .concat('/mix-manifest.json')
 
             if (process.env.DEBUG || process.env.APP_DEBUG)
                 console.log(" DEBUG", {
                     output: output.path,
                     publicPath: output.publicPath,
-                    asset_path: asseet_path,
+                    asset_path: asset_path,
                     mixPath: this.mixPath,
                 })
 
@@ -72,12 +72,12 @@ module.exports = class MixManifest {
 
                 if (!reAsset.test(assetExt) && assetInfo.sourceFilename) {
                     mixAsset.key = assetInfo.sourceFilename
-                    mixAsset.file = asseet_path.concat(asset)
+                    mixAsset.file = asset_path.concat(asset)
                 } else if (reQueryHash.test(asset)) {
-                    mixAsset.key = asseet_path.concat(asset.replace(reQueryHash, ''))
-                    mixAsset.file = asseet_path.concat(asset)
+                    mixAsset.key = asset_path.concat(asset.replace(reQueryHash, ''))
+                    mixAsset.file = asset_path.concat(asset)
                 } else if (reNameHash.test(asset)) {
-                    mixAsset.file = asseet_path.concat(asset)
+                    mixAsset.file = asset_path.concat(asset)
                     mixAsset.key = mixAsset.file.replace(reNameHash, '')
                 } else if (reHashed.test(asset)) {
                     console.log(

@@ -26,15 +26,13 @@ Options:
 assets path or mix-manifest.json path can be preset.
   
 default options :
-
- new MixManifest({
+{
     mixManifest: 'auto', // mix-manifest.json at webroot:  but should be define ASSET_PATH environment.  https://webpack.js.org/guides/public-path/
     hashPattern: '[a-f0-9]{hashDigestLength}', // {hash}
     namePattern: '[\\.-]', //  name-{hash}
     queryPattern: '\\?[w_]=', // ?_={hash}
-    resources: true, // if false only js/css updated in manifest
-    extensions: null, // override resources option
-    // extensions: ['js', 'css'],
+    resources: false, // if false only js/css updated in manifest
+    extensions: ['js', 'css']  // override resources option
  })
  
  
