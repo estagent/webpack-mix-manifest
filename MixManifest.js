@@ -2,10 +2,14 @@ const fs = require('fs')
 const path = require('path')
 
 const defaultOptions = {
-    mixManifest: 'public/mix-manifest.json',
-    assetsPath: null,
+    mixManifest: 'auto', // mix-manifest.json at webroot:  but should be define ASSET_PATH environment.  https://webpack.js.org/guides/public-path/
+    hashPattern: '[a-f0-9]{hashDigestLength}', // {hash}
+    namePattern: '[\\.-]', //  name-{hash}
+    queryPattern: '\\?[w_]=', // ?_={hash}
+    resources: true, // if false only js/css updated in manifest
+    extensions: null, // override resources option
+    // extensions: ['js', 'css'],
 }
-
 module.exports = class MixManifest {
     constructor(options = {}) {
         this.options = this.mergeOptions(options, defaultOptions)
@@ -17,50 +21,103 @@ module.exports = class MixManifest {
                 defaults[key] = options[key]
             }
         }
-
-        defaults.mixPath = path.resolve(defaults.mixManifest)
-        defaults.publicPath = path.dirname(defaults.mixPath)
-
         return defaults
     }
 
     apply(compiler) {
-        const self = this
+        const opts = this.options
+        let asseet_path
+
         compiler.hooks.done.tap('MixManifest', stats => {
-            if (!self.options.assetsPath) {
-                const filePath = stats.compilation.outputOptions.path
-                if (filePath)
-                    self.options.assetsPath = '/' + filePath.replace(/^.*[\\\/]/, '')
+            const assets = stats.compilation.assetsInfo;
+            const output = stats.compilation.outputOptions
+            const hashDigestLength = output.hashDigestLength.toString();
+
+            asseet_path = output.publicPath ?? '/'
+            if (output.publicPath === 'auto') {
+                // if (!process.env.ASSET_PATH) throw 'ASSET_PATH env is not defined! Please set ASSET_PATH in  EnvironmentPlugin '
+                asseet_path = process.env.ASSET_PATH ?? '/'
             }
+            if (asseet_path === '') asseet_path = '/'
 
-            const mixManifest = JSON.parse(
-                fs.readFileSync(self.options.mixPath, 'utf8'),
-            )
+            this.mixPath = opts.mixManifest !== 'auto'
+                ? path.resolve(opts.mixManifest)
+                : output.path
+                    .replace(asseet_path.replace(/\/$/, ''), '')
+                    .concat('/mix-manifest.json')
 
-            let mixModified = false
+            if (process.env.DEBUG || process.env.APP_DEBUG)
+                console.log(" DEBUG", {
+                    output: output.path,
+                    publicPath: output.publicPath,
+                    asset_path: asseet_path,
+                    mixPath: this.mixPath,
+                })
 
-            for (let asset of Object.keys(stats.compilation.assets)) {
-                const hashPath = this.options.assetsPath + '/' + asset
-                let mixKey
+            const mixManifest = this.getMixManifest()
+            let mixChanged = false
 
-                if (hashPath.match(/\./g).length > 1)
-                    mixKey = hashPath.replace(/\.\w+\./, '.')
+            const reHashed = new RegExp(opts.hashPattern.replace('hashDigestLength', hashDigestLength))
+            const reNameHash = new RegExp(opts.namePattern.concat(opts.hashPattern).replace('hashDigestLength', hashDigestLength))
+            const reQueryHash = new RegExp(opts.queryPattern.concat(opts.hashPattern).replace('hashDigestLength', hashDigestLength))
+            const reExt = new RegExp('^'.concat(opts.extensions ?? (opts.resources ? '.*' : 'css|js')).concat('$'))
+            const reAsset = /^css|js$/
 
-                if (!mixKey)
+
+            assets.forEach(function (assetInfo, asset) {
+                const assetExt = asset.split('?').shift().split('.').pop()
+
+                if (!reExt.test(assetExt)) return
+                let mixAsset = {}
+
+                if (!reAsset.test(assetExt) && assetInfo.sourceFilename) {
+                    mixAsset.key = assetInfo.sourceFilename
+                    mixAsset.file = asseet_path.concat(asset)
+                } else if (reQueryHash.test(asset)) {
+                    mixAsset.key = asseet_path.concat(asset.replace(reQueryHash, ''))
+                    mixAsset.file = asseet_path.concat(asset)
+                } else if (reNameHash.test(asset)) {
+                    mixAsset.file = asseet_path.concat(asset)
+                    mixAsset.key = mixAsset.file.replace(reNameHash, '')
+                } else if (reHashed.test(asset)) {
                     console.log(
-                        `ERROR: asset (${asset}) path could not be resolved! asset not dotted ? else try  assetsPath option`,
+                        `ERROR: asset (${asset}) has hash but format is not supported. check options to solve`,
                     )
-                else if (!mixManifest[mixKey] || mixManifest[mixKey] !== hashPath) {
-                    mixManifest[mixKey] = hashPath
-                    mixModified = true
                 }
-            }
 
-            if (mixModified) {
-                const manifestJSON = JSON.stringify(mixManifest, null, 2)
-                fs.writeFileSync(self.options.mixPath, manifestJSON)
-                console.log(`[mixManifest updated] ${manifestJSON}`)
+                if (!mixAsset.key) {
+                    console.log(`asset (${asset}) is not hashed`)
+                } else if (
+                    !mixManifest[mixAsset.key] ||
+                    mixManifest[mixAsset.key] !== mixAsset.file
+                ) {
+                    mixManifest[mixAsset.key] = mixAsset.file
+                    mixChanged = true
+                }
+            })
+            if (mixChanged) {
+                if (this.updateMixManifest(mixManifest))
+                    console.log(`[mixManifest updated]`)
+
             }
         })
+    }
+
+    getMixManifest() {
+        try {
+            return JSON.parse(fs.readFileSync(this.mixPath, 'utf8'))
+        } catch (e) {
+            return {}
+        }
+    }
+
+    updateMixManifest(data) {
+        try {
+            fs.writeFileSync(this.mixPath, JSON.stringify(data, null, 2))
+            return false
+        } catch (e) {
+            console.error(e)
+            return false
+        }
     }
 }
