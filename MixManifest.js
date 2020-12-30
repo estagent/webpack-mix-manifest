@@ -7,8 +7,8 @@ const defaultOptions = {
     namePattern: '[\\.-]', //  name-{hash}
     queryPattern: '\\?[w_]=', // ?_={hash}
     resources: false, // if false only js/css updated in manifest
-    // extensions: null, // override resources option
-    extensions: ['js', 'css'],
+    extensions: null, // override resources option
+    // extensions: ['js', 'css'],
 }
 module.exports = class MixManifest {
     constructor(options = {}) {
@@ -60,7 +60,7 @@ module.exports = class MixManifest {
             const reHashed = new RegExp(opts.hashPattern.replace('hashDigestLength', hashDigestLength))
             const reNameHash = new RegExp(opts.namePattern.concat(opts.hashPattern).replace('hashDigestLength', hashDigestLength))
             const reQueryHash = new RegExp(opts.queryPattern.concat(opts.hashPattern).replace('hashDigestLength', hashDigestLength))
-            const reExt = new RegExp('^'.concat(opts.extensions ?? (opts.resources ? '.*' : 'css|js')).concat('$'))
+            const reExt = new RegExp('^'.concat(opts.extensions ? opts.extensions.join('|') : (opts.resources ? '.*' : 'css|js')).concat('$'))
             const reAsset = /^css|js$/
 
 
