@@ -17,10 +17,7 @@ if (! function_exists('mix')) {
         $path = "/{$path}";
 
         if (! array_key_exists($path, $manifest)) {
-            throw new Exception(
-                "Unable to locate Mix file: {$path}. Please check your " .
-                'webpack.mix.js output paths and try again.'
-            );
+            throw new \Exception("Unable to locate Mix file: {$path}. Please check your");
         }
         return $manifest[$path];
     }

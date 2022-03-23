@@ -1,0 +1,35 @@
+* text=auto
+* text eol=lf
+
+*.txt text
+*.js diff=js
+*.php diff=php
+*.css diff=css
+*.scss diff=scss
+*.blade.php diff=html
+*.html diff=html
+*.sql diff=sql
+*.md diff=markdown
+
+*.ico binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ttf binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.aac binary
+*.mp4 binary
+*.ac3 binary
+*.gz binary
+*.zip binary
+*.jar binary
+*.class binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.apk binary
+
+/.github export-ignore
+

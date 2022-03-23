@@ -1,8 +1,10 @@
-.idea
-.vscode
+/.idea/
+/.vscode/
+/node_modules
+/dist/
+/vendor/
+/node_modules/
 .env
 .mix.env
-dist
-/vendor
-node_modules
+package-lock.json
 
